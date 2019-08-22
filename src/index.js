@@ -3,89 +3,93 @@
 
 const quotesURL = "http://localhost:3000/quotes?_embed=likes"
 const postURL = "http://localhost:3000/likes"
+const postQuotes = "http://localhost:3000/quotes"
 const jsonify = res => res.json()
 
 const fetchQuotes = () => {
   fetch(quotesURL)
-  .then(jsonify)
-  .then(renderAllQuotes)
+    .then(jsonify)
+    .then(resp => renderAllQuotes(resp))
 }
 
-const renderAllQuotes = allQuotes => {
-  allQuotes.map(saying => renderQuoteCard(saying))
-}
+const renderQuote = quote => {
 
-const renderQuote = saying => {
-  const quotesContainer = document.querySelector("new-quote-form")
-  saying
-}
+  const ul = document.querySelector("#quote-list")
+  const li = document.createElement('li')
+  li.className = "quote-card"
 
-const renderQuoteCard = saying => {
-
-  const ul = document.querySelector('ul')
-  const li = document.createElement('li');
-  li.className = "quote-card";
-
-  const blockquote = document.createElement('blockquote')
+  const blockquote = document.createElement("blockquote")
   blockquote.className = "blockquote"
+  const p = document.createElement('p')
+  p.className = "mb-0"
+  const footer = document.createElement("footer")
+  footer.className = "blockquote-footer"
+  const br = document.createElement("br")
+  const button = document.createElement("button")
+  button.className = "btn-success"
+  const btn2 = document.createElement('button')
+  btn2.className = "btn-danger"
+  const span = document.createElement("span")
 
-  const p  = document.createElement('p')
-  p.className =  "mb-0"
+  p.innerText = quote.quote
+  footer.innerText = quote.author
+  button.innerText = `Likes: `
+  span.innerText = quote.likes.length
+  button.id = `like-${quote.id}`
 
-  const footer = document.createElement("footer");
-  footer.className = "blockquote-footer";
-
-  const br = document.createElement('br');
-
-  const btn1 = document.createElement("button");
-  btn1.className = "btn-success";
-  btn1.id = saying.id
-
-  const span = document.createElement('span')
-
-  const btn2 = document.createElement("button");
-  btn2.className = "btn-danger";
-
-  p.innerText = saying.quote;
-  footer.innerText = saying.author;
-  btn1.innerText = `${saying.likes.length} Like(s)`
   btn2.innerText = "Delete"
 
-  btn1.addEventListener("click", e => {
-    e.target.innerText = `${parseInt(e.target.innerText[0]) + 1} Like(s)`
-    postData(parseInt(btn1.id))
-  });
-
-  btn2.addEventListener("click", e => {
-    deleteQuote(saying.id, li)
-    .then(() => li.remove())
-    .catch(error => console.error(error))
-  })
-
-  li.append(blockquote)
-  blockquote.append(p, footer, br, btn1, span, btn2)
   ul.append(li)
-};
+  blockquote.append(p, footer, br, button, btn2)
+  li.append(blockquote)
+  button.append(span)
 
-function deleteQuote(quoteId) {
-  return fetch(`${postURL}/${quoteId}`, {method: "DELETE"}) 
-    .then(jsonify)
-  }
+  button.addEventListener("click", (e) => {
+    id = parseInt(e.target.id.split("-")[1]);
+    updateLikes(id)
+    e.target.firstElementChild.innerText = parseInt(e.target.firstElementChild.innerText) + 1
+  })
+}
 
-function postData(quoteId) {
-  return fetch(postURL, {
-    method: "POST", 
-    headers: {
-      "Content-Type": "application/json"
+let updateLikes = qi => {
+  fetch(postURL, {
+    method: "POST",
+    header: {
+      "Content-Type": "application.json"
     },
     body: JSON.stringify({
-      quoteId: quoteId
+      quoteId: qi
     })
   })
 }
-
-function init() {
-  fetchQuotes()
+const renderAllQuotes = quotes => {
+  quotes.forEach(quote => {
+    renderQuote(quote)
+  })
 }
 
-init()
+const captureData = () => {
+  const quoteForm = document.querySelector("#new-quote-form")
+  const newQuote = document.querySelector("#new-quote")
+  const author = document.querySelector("#author")
+
+  quoteForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    postNewQuotes();
+  })
+
+  const postNewQuotes = () => {
+    fetch(postQuotes, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        "author": author.value,
+        "quote": newQuote.value,
+        "likes": []
+      })
+    }).then(jsonify)
+      .then(resp => renderQuote(resp))
+  }
+}
+
+document.addEventListener("DOMContentLoaded", fetchQuotes(), captureData())
